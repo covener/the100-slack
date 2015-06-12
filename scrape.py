@@ -70,7 +70,15 @@ def parsePlayers(o):
         players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
     return players
 
-r = requests.get('https://www.the100.io/groups/186/gaming_sessions')
+###
+
+if len(sys.argv) > 1:
+    group = sys.argv[1]
+else:
+    print "You must pass a group ID from the100.io as an argument to this script."
+    sys.exit(1)
+
+r = requests.get('https://www.the100.io/groups/' + group + '/gaming_sessions')
 
 html = r.text.encode('utf-8')
 soup = BeautifulSoup(html)
