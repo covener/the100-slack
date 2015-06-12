@@ -39,6 +39,14 @@ keywordChannelMap = {
     "fatebringer": "fatebringerless"
 }
 
+if len(sys.argv) > 1:
+    group = int(sys.argv[1])
+elif (dev == True):
+    group = 186
+else:
+    print "You must pass a group ID from the100.io as an argument to this script."
+    sys.exit(1)
+
 ### Game class
 
 class Game:
@@ -58,6 +66,7 @@ class Game:
         self.partySize = self.parsePartySize(o)
         self.maxPlayers = self.parseMaxPlayers(o)
         self.gameId = self.parseGameId(o)
+        self.groupId = group
         self.channels = self.parseChannels(o)
 
     ### class utilities
@@ -148,15 +157,7 @@ class Game:
 
 ### main
 
-if len(sys.argv) > 1:
-    group = sys.argv[1]
-elif (dev == True):
-    group = "186"
-else:
-    print "You must pass a group ID from the100.io as an argument to this script."
-    sys.exit(1)
-
-r = requests.get('https://www.the100.io/groups/' + group + '/gaming_sessions')
+r = requests.get('https://www.the100.io/groups/' + str(group) + '/gaming_sessions')
 
 html = r.text.encode('utf-8')
 soup = BeautifulSoup(html)
