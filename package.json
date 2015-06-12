@@ -1,0 +1,32 @@
+{
+    "dependencies": {
+        "express": "~4.9.x",
+        "request": "~2.57.0",
+        "apigee-access": "~1.3.0",
+        "async": "~1.2.1",
+        "cron": "~1.0.9"
+    },
+    "description": "A web scraper and slack integration for the100.io",
+    "engines": {
+        "node": "0.12.2"
+    },
+    "keywords": [
+        "node",
+        "heroku",
+        "express",
+        "the100",
+        "destiny",
+        "ps4"
+    ],
+    "license": "MIT",
+    "main": "server.js",
+    "name": "the100-slack",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/r3mus/the100-slack"
+    },
+    "scripts": {
+        "start": "node server.js"
+    },
+    "version": "0.0.1"
+}
