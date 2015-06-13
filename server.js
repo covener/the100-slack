@@ -30,7 +30,7 @@ app.get('/:group', function(req, res) {
         } else {
             res.json(results.scrape);
             token = results.token.access_token;
-            scrapeHandler(results.scrape, function(success) {
+            scrapeHandler(results.scrape.games, function(success) {
                 if (success) {
                     console.log("Job completed successfully");
                 }
@@ -86,8 +86,7 @@ function get100Data(group, callback) {
                     if (code !== 0) {
                         callback(true);
                     } else {
-                        var games = JSON.parse(scrapedData).games
-                        callback(null, games);
+                        callback(null, JSON.parse(scrapedData));
                     }
                 });
             }
