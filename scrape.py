@@ -1,7 +1,7 @@
 import requests, json, sys, re, moment
 from bs4 import BeautifulSoup
 
-dev = True  
+dev = False  
 
 gameTitleChannelMap = {
     "Crota's End - Normal Mode": "crota-nm",

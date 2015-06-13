@@ -40,22 +40,22 @@ app.get('/:group', function(req, res) {
 });
 
 app.listen(process.env.PORT || 8000, function() {
-    request.get("http://localhost:8000/186");
+    // request.get("http://localhost:8000/186");
 });
 
-// var job = new CronJob('* * * * * *', function() {
-//     console.log("Started cron job");
-//     get100Data(defaultGroup, function(err, results) {
-//         token = results.token.access_token;
-//         scrapeHandler(results.scrape, function(success) {
-//             if (success) {
-//                 console.log("Job completed successfully");
-//             }
-//         });
-//     });
-// }, function() {
-//     console.log("Cron job finished");
-// }, true, null);
+var job = new CronJob('0 * * * * *', function() {
+    console.log("Started cron job");
+    get100Data(defaultGroup, function(err, results) {
+        token = results.token.access_token;
+        scrapeHandler(results.scrape, function(success) {
+            if (success) {
+                console.log("Job completed successfully");
+            }
+        });
+    });
+}, function() {
+    console.log("Cron job finished");
+}, true, null);
 
 function get100Data(group, callback) {
     async.parallel({
@@ -117,13 +117,13 @@ function scrapeHandler(games, callback) {
                         body: game
                     }, function(e, r, body) {
                         if (game.groupId === defaultGroup) {
-                            // notify(game, body.entities[0].uuid);
+                            notify(game, body.entities[0].uuid);
                         }
                     });
                 } else if (body.entities[0].notification === "failed") {
                     if (game.groupId === defaultGroup) {
                         console.log(util.format("Re-sending notification for %s (%s)", game.gameId, body.entities[0].uuid))
-                            // notify(game, body.entities[0].uuid);
+                            notify(game, body.entities[0].uuid);
                     }
                 } else {
                     console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
