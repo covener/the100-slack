@@ -173,7 +173,7 @@ function notify(game, uuid) {
     var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
     var requiredLevelString = (game.requiredLevel) ? util.format("*level %s+* ", game.requiredLevel) : "";
     if (availableSpots > 0) {
-        var guardianString = "guardian" + (availableSpots > 1) ? "s" : "";
+        var guardianString = (availableSpots > 1) ? "guardians" : "guardian";
         game.channels.push("general"); // add the general channel too
         async.each(game.channels, function(channel, callback) {
             request.post({
