@@ -12,7 +12,10 @@ var baasUrl = "https://api.usergrid.com/the100/slack";
 var slackWebHookUrl = "https://hooks.slack.com/services/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";
 var defaultGroup = 186;
 var token = "";
-var quotes = [] // Not used
+var quotes = [{
+    "name": "ghost",
+    "text": "So you think you can kill a god?"
+}]
 
 app.get('/', function(req, res) {
     var fullUrl = util.format("%s://%s%s", req.protocol, req.get('host'), req.originalUrl);
@@ -43,11 +46,11 @@ app.listen(process.env.PORT || 8000, function() {
     // request.get("http://localhost:8000/186");
 });
 
-var job = new CronJob('0 * * * * *', function() {
-    console.log("Started cron job");
+var job = new CronJob('*/20 * * * * *', function() {
+    console.log("Started cron job on %s", moment());
     get100Data(defaultGroup, function(err, results) {
         token = results.token.access_token;
-        scrapeHandler(results.scrape, function(success) {
+        scrapeHandler(results.scrape.games, function(success) {
             if (success) {
                 console.log("Job completed successfully");
             }
@@ -56,6 +59,24 @@ var job = new CronJob('0 * * * * *', function() {
 }, function() {
     console.log("Cron job finished");
 }, true, null);
+
+var quoteJob = new CronJob('0 10 * * * *', function() {
+    console.log("Sent a quote");
+    var quote = items[Math.floor(Math.random()*items.length)];
+    request.post({
+        url: "",
+        json: true,
+        body: {
+            "attachments": [{
+                "color": "#danger",
+                "fallback": "\"" + quote.text + "\"",
+                "text": "\"" + quote.text + "\""
+            }],
+            "icon_url": "https://rebekahlang.files.wordpress.com/2015/05/ghost-02-png.png",
+            "username": quote.name
+        }
+    })
+})
 
 function get100Data(group, callback) {
     async.parallel({
@@ -99,41 +120,45 @@ function get100Data(group, callback) {
 function scrapeHandler(games, callback) {
     async.each(games, function(game, callback) {
             request.get({
-                url: baasUrl + "/games?ql=where%20gameId=" + game.gameId,
+                url: util.format("%s/games?ql=where%20gameId=%s", baasUrl, game.gameId),
                 auth: {
                     bearer: token
                 },
                 json: true
             }, function(e, r, body) {
-                if (body.count === 0) {
-                    console.log(util.format("Creating new game for %s", game.gameId))
-                    request.post({
-                        url: baasUrl + "/games",
-                        auth: {
-                            bearer: token
-                        },
-                        json: true,
-                        body: game
-                    }, function(e, r, body) {
+                if (e) {
+                    console.log("Error: bad BaaS request:\n%s", body);
+                } else {
+                    if (body.count === 0) {
+                        console.log(util.format("Creating new game for %s", game.gameId))
+                        request.post({
+                            url: util.format("%s/games", baasUrl),
+                            auth: {
+                                bearer: token
+                            },
+                            json: true,
+                            body: game
+                        }, function(e, r, body) {
+                            if (game.groupId === defaultGroup) {
+                                notify(game, body.entities[0].uuid);
+                            }
+                        });
+                    } else if ('notification' in body.entities[0] && body.entities[0].notification === "failed") {
                         if (game.groupId === defaultGroup) {
+                            console.log(util.format("Re-sending notification for %s (%s)", game.gameId, body.entities[0].uuid))
                             notify(game, body.entities[0].uuid);
                         }
-                    });
-                } else if (body.entities[0].notification === "failed") {
-                    if (game.groupId === defaultGroup) {
-                        console.log(util.format("Re-sending notification for %s (%s)", game.gameId, body.entities[0].uuid))
-                            notify(game, body.entities[0].uuid);
+                    } else {
+                        console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
+                        request.put({
+                            url: util.format("%s/games/%s", baasUrl, body.entities[0].uuid),
+                            auth: {
+                                bearer: token
+                            },
+                            json: true,
+                            body: game
+                        });
                     }
-                } else {
-                    console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
-                    request.put({
-                        url: util.format("%s/games/%s", baasUrl, body.entities[0].uuid),
-                        auth: {
-                            bearer: token
-                        },
-                        json: true,
-                        body: game
-                    });
                 }
             })
         },
@@ -148,6 +173,8 @@ function notify(game, uuid) {
     var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
     var requiredLevelString = (game.requiredLevel) ? util.format("*level %s+* ", game.requiredLevel) : "";
     if (availableSpots > 0) {
+        var guardianString = "guardian" + (availableSpots > 1) ? "s" : "";
+        game.channels.push("general"); // add the general channel too
         async.each(game.channels, function(channel, callback) {
             request.post({
                 url: slackWebHookUrl,
@@ -160,7 +187,7 @@ function notify(game, uuid) {
                     }],
                     "channel": util.format("#%s", channel),
                     "icon_url": "https://www.the100.io/apple-touch-icon.png",
-                    "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *~%s* (%s) — need *%s* %sguardians", game.host.name, game.host.name, game.url, game.title, relativeTime, utcTime, availableSpots, requiredLevelString),
+                    "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *%s* (%s) — need *%s* %s%s", game.host.name, game.host.name, game.url, game.title, relativeTime, utcTime, availableSpots, requiredLevelString, guardianString),
                     "username": "the100"
                 }
             }, function(e, r, body) {
