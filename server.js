@@ -143,13 +143,13 @@ function scrapeHandler(games, callback) {
                                 notify(game, body.entities[0].uuid);
                             }
                         });
-                    } else if ('notification' in body.entities[0] && body.entities[0].notification === "failed") {
+                    } else if (!('notification' in body.entities[0]) || ('notification' in body.entities[0] && body.entities[0].notification === "failed")) {
                         if (game.groupId === defaultGroup) {
                             console.log(util.format("Re-sending notification for %s (%s)", game.gameId, body.entities[0].uuid))
                             notify(game, body.entities[0].uuid);
                         }
                     } else {
-                        console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
+                        // console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
                         request.put({
                             url: util.format("%s/games/%s", baasUrl, body.entities[0].uuid),
                             auth: {
