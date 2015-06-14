@@ -168,55 +168,53 @@ function scrapeHandler(games, callback) {
 }
 
 function notify(game, uuid) {
-    if (availableSpots > 0) {
-        var relativeTime = moment(game.time).fromNow();
-        var utcTime = util.format("%s GMT", moment(game.time).utc().format("MMM D, hh:mma"));
-        var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
-        var requiredLevelString = (game.requiredLevel) ? util.format("*level %s%s* ", game.requiredLevel, ((game.requiredLevel < 34) ? "+" : "")) : "";
-        var guardianString = (availableSpots > 1) ? "guardians" : "guardian";
-        game.channels.push("general"); // add the general channel too
-        async.each(game.channels, function(channel, callback) {
-            request.post({
-                url: slackWebHookUrl,
-                json: true,
-                body: {
-                    "attachments": [{
-                        "color": "#ddd",
-                        "fallback": game.description,
-                        "text": game.description
-                    }],
-                    "channel": util.format("#%s", channel),
-                    "icon_url": "https://www.the100.io/apple-touch-icon.png",
-                    "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *%s* (%s) — need *%s* %s%s", game.host.name, game.host.name, game.url, game.title, relativeTime, utcTime, availableSpots, requiredLevelString, guardianString),
-                    "username": "the100"
-                }
-            }, function(e, r, body) {
-                if (body === "ok") {
-                    console.log(util.format("Notification sent to %s for game %s", channel, game.gameId));
-                    request.put({
-                        url: util.format("%s/games/%s", baasUrl, uuid),
-                        auth: {
-                            bearer: token
-                        },
-                        json: true,
-                        body: {
-                            notification: "delivered"
-                        }
-                    });
-                } else {
-                    console.log(util.format("Error sending Slack notification: %s", body))
-                    request.put({
-                        url: util.format("%s/games/%s", baasUrl, uuid),
-                        auth: {
-                            bearer: token
-                        },
-                        json: true,
-                        body: {
-                            notification: "failed"
-                        }
-                    });
-                }
-            });
+    var relativeTime = moment(game.time).fromNow();
+    var utcTime = util.format("%s GMT", moment(game.time).utc().format("MMM D, hh:mma"));
+    var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
+    var requiredLevelString = (game.requiredLevel) ? util.format("*level %s%s* ", game.requiredLevel, ((game.requiredLevel < 34) ? "+" : "")) : "";
+    var guardianString = (availableSpots > 1) ? "guardians" : "guardian";
+    game.channels.push("general"); // add the general channel too
+    async.each(game.channels, function(channel, callback) {
+        request.post({
+            url: slackWebHookUrl,
+            json: true,
+            body: {
+                "attachments": [{
+                    "color": "#ddd",
+                    "fallback": game.description,
+                    "text": game.description
+                }],
+                "channel": util.format("#%s", channel),
+                "icon_url": "https://www.the100.io/apple-touch-icon.png",
+                "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *%s* (%s) — need *%s* %s%s", game.host.name, game.host.name, game.url, game.title, relativeTime, utcTime, availableSpots, requiredLevelString, guardianString),
+                "username": "the100"
+            }
+        }, function(e, r, body) {
+            if (body === "ok") {
+                console.log(util.format("Notification sent to %s for game %s", channel, game.gameId));
+                request.put({
+                    url: util.format("%s/games/%s", baasUrl, uuid),
+                    auth: {
+                        bearer: token
+                    },
+                    json: true,
+                    body: {
+                        notification: "delivered"
+                    }
+                });
+            } else {
+                console.log(util.format("Error sending Slack notification: %s", body))
+                request.put({
+                    url: util.format("%s/games/%s", baasUrl, uuid),
+                    auth: {
+                        bearer: token
+                    },
+                    json: true,
+                    body: {
+                        notification: "failed"
+                    }
+                });
+            }
         });
-    }
+    });
 }
