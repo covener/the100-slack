@@ -174,9 +174,9 @@ function notify(game, uuid) {
     var requiredLevelString = (game.requiredLevel) ? util.format("*level %s%s* ", game.requiredLevel, ((game.requiredLevel < 34) ? "+" : "")) : "";
     var guardianString = "";
     if (availableSpots > 1) {
-        guardianString = util.format("need *%s* %sguardians", availableSpots, requiredLevelString, guardians);
+        guardianString = util.format("need *%s* %sguardians", availableSpots, requiredLevelString);
     } else if (availableSpots = 1) {
-        guardianString = util.format("need *%s* %sguardian", availableSpots, requiredLevelString, guardians);
+        guardianString = util.format("need *%s* %sguardian", availableSpots, requiredLevelString);
     } else if (availableSpots <= 0) {
         guardianString = "(this game is full)";
     }
