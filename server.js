@@ -172,7 +172,14 @@ function notify(game, uuid) {
     var utcTime = util.format("%s GMT", moment(game.time).utc().format("MMM D, hh:mma"));
     var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
     var requiredLevelString = (game.requiredLevel) ? util.format("*level %s%s* ", game.requiredLevel, ((game.requiredLevel < 34) ? "+" : "")) : "";
-    var guardianString = (availableSpots > 1) ? "guardians" : "guardian";
+    var guardianString = "";
+    if (availableSpots > 1) {
+        guardianString = util.format("need *%s* %sguardians", availableSpots, requiredLevelString, guardians);
+    } else if (availableSpots = 1) {
+        guardianString = util.format("need *%s* %sguardian", availableSpots, requiredLevelString, guardians);
+    } else if (availableSpots <= 0) {
+        guardianString = "(this game is full)";
+    }
     game.channels.push("general"); // add the general channel too
     async.each(game.channels, function(channel, callback) {
         request.post({
@@ -186,7 +193,7 @@ function notify(game, uuid) {
                 }],
                 "channel": util.format("#%s", channel),
                 "icon_url": "https://www.the100.io/apple-touch-icon.png",
-                "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *%s* (%s) — need *%s* %s%s", game.host.name, game.host.name, game.url, game.title, relativeTime, utcTime, availableSpots, requiredLevelString, guardianString),
+                "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *%s* (%s) — %s", game.host.name, game.host.name, game.url, game.title, relativeTime, utcTime, guardianString),
                 "username": "the100"
             }
         }, function(e, r, body) {
