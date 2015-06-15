@@ -169,7 +169,7 @@ function scrapeHandler(games, callback) {
 
 function notify(game, uuid) {
     var relativeTime = moment(game.time).fromNow();
-    var utcTime = util.format("%s GMT", moment(game.time).utc().format("MMM D, hh:mma"));
+    var gameTime = util.format("%s PST", moment(game.time).format("MMM D, hh:mma"));
     var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
     var requiredLevelString = (game.requiredLevel) ? util.format("*level %s%s* ", game.requiredLevel, ((game.requiredLevel < 34) ? "+" : "")) : "";
     var guardianString = "";
@@ -193,7 +193,7 @@ function notify(game, uuid) {
                 }],
                 "channel": util.format("#%s", channel),
                 "icon_url": "https://www.the100.io/apple-touch-icon.png",
-                "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *%s* (%s) — %s", game.host.name, game.host.name, game.url, game.title, relativeTime, utcTime, guardianString),
+                "text": util.format("New game by <@%s|%s> — *<%s|%s>*\nStarting *%s* (%s) — %s", game.host.name, game.host.name, game.url, game.title, relativeTime, gameTime, guardianString),
                 "username": "the100"
             }
         }, function(e, r, body) {
