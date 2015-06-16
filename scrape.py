@@ -115,7 +115,8 @@ class Game:
         return int(lvl.group(1)) if (lvl) else None
 
     def parseDescription(self, o):
-        return o.find("h4", { "class": "issue-item-text"}).findNext('p').text.rstrip().lstrip()
+        description = o.find("h4", { "class": "issue-item-text"}).findNext('p').text.rstrip().lstrip()
+        return description
 
     def parsePlatform(self, o):
         return o.find("span", { "class": "badge"}).text
@@ -135,6 +136,8 @@ class Game:
             return self.players[0]  
         elif (len(self.parsePlayers(o)) > 0):
             return self.parsePlayers(o)[0]
+        else:
+            return {}
 
     def parsePartySize(self, o):
         partySize = re.search(r"(\d+) players? / \d+", self.gameDetails)
@@ -160,7 +163,8 @@ class Game:
 
 ### main
 
-r = requests.get('https://www.the100.io/groups/' + str(group) + '/gaming_sessions')
+cookies = {'auth_token': '6cGH726-PuRCO1AiiEn6Gw'}
+r = requests.get('https://www.the100.io/groups/' + str(group) + '/gaming_sessions', cookies=cookies)
 
 html = r.text.encode('utf-8')
 soup = BeautifulSoup(html)

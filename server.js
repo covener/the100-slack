@@ -47,7 +47,7 @@ app.listen(process.env.PORT || 8000, function() {
 });
 
 var job = new CronJob('*/20 * * * * *', function() {
-    console.log("Started cron job on %s", moment());
+    // console.log("Started cron job on %s", moment());
     get100Data(defaultGroup, function(err, results) {
         token = results.token.access_token;
         scrapeHandler(results.scrape.games, function(success) {
@@ -57,7 +57,7 @@ var job = new CronJob('*/20 * * * * *', function() {
         });
     });
 }, function() {
-    console.log("Cron job finished");
+    // console.log("Cron job finished");
 }, true, null);
 
 var quoteJob = new CronJob('0 10 * * * *', function() {
