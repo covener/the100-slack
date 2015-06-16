@@ -131,7 +131,10 @@ class Game:
         return players
 
     def parseHost(self, o):
-        return self.players[0] if (len(self.players) > 0) else parsePlayers(o)[0]
+        if (len(self.players) > 0):
+            return self.players[0]  
+        elif (len(self.parsePlayers(o)) > 0):
+            return self.parsePlayers(o)[0]
 
     def parsePartySize(self, o):
         partySize = re.search(r"(\d+) players? / \d+", self.gameDetails)
