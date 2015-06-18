@@ -79,7 +79,7 @@ var quoteJob = new CronJob('0 0 * * * *', function() {
                 "text": text,
                 "mrkdwn_in": ["text", "pretext"]
             }],
-            "channel": "#general",
+            "channel": "#random",
             "icon_url": "https://rebekahlang.files.wordpress.com/2015/05/ghost-02-png.png",
             "username": "dinklebot",
             "mkdwn": true
