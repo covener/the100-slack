@@ -66,7 +66,7 @@ var gamesJob = new CronJob('*/20 * * * * *', function() {
     // console.log("Cron job finished");
 }, true, null);
 
-var quoteJob = new CronJob('0 */20 * * * *', function() {
+var quoteJob = new CronJob('0 0 * * * *', function() {
     var quote = quotes[Math.floor(Math.random() * quotes.length)];
     var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
     request.post({
