@@ -13,9 +13,48 @@ var slackWebHookUrl = "https://hooks.slack.com/services/T04R3BJDC/B068JQQ4Q/joXA
 var defaultGroup = 186;
 var token = "";
 var quotes = [{
-    "name": "ghost",
+    "name": "Ghost",
     "text": "So you think you can kill a god?"
-}]
+}, {
+    "name": "Reddit",
+    "text": "Fixed a bug where No Land Beyond's impact was too high."
+}, {
+    "name": "Reddit",
+    "text": "Fixed a bug where no land beyond did damage."
+}, {
+    "name": "Ghost",
+    "text": "This path should lead us straight to the grave.\n...The World's Grave. Not ours."
+}, {
+    "name": "",
+    "text": "Ghost: \"Can't we just stay here with the murderous robots?\"\nPlayer: \"No, _little light._\"\nGhost: \"_Don't_ do that.\""
+}, {
+    "name": "Master Rahool, Cryptarch",
+    "text": "Roses are red, your item is blue, your engram was purple, sucks to be you."
+}, {
+    "name": "Hardcase Hunter Cloak",
+    "text": "If you learn nothing else, learn this: when a Hunter takes up a cloak of a dead comrade, this is a vow."
+}, {
+    "name": "Invective",
+    "text": "I tried to talk them down. They made a grab for my ghost. It was a pretty short conversation after that."
+}, {
+    "name": "Ghost",
+    "text": "We've woken the hive!"
+}, {
+    "name": "Variks",
+    "text": "That is the leader of the Fang. He just called you a....well it was an insult."
+}, {
+    "name": "Postmaster",
+    "text": "Package for warlock... stop floating... bad package!"
+}, {
+    "name": "Steel Oracle Z-11",
+    "text": "I forsee fire. Fire and screams.\nYou would, mate. You're a rocket launcher."
+}, {
+    "name": "Ghost",
+    "text": "A cell! From the Prison of Elders!"
+}, {
+    "name": "Omnigol",
+    "text": "AAAAEEEEEEKKEkekekkekekEKKEKAKAHHAHAHAHA!!!!!!!!!"
+}, ]
 
 app.get('/', function(req, res) {
     var fullUrl = util.format("%s://%s%s", req.protocol, req.get('host'), req.originalUrl);
@@ -34,9 +73,9 @@ app.get('/:group', function(req, res) {
             res.json(results.scrape);
             token = results.token.access_token;
             scrapeHandler(results.scrape.games, function(success) {
-                if (success) {
-                    console.log("Job completed successfully");
-                }
+                // if (success) {
+                //     console.log("Job completed successfully");
+                // }
             });
         }
     });
@@ -46,37 +85,42 @@ app.listen(process.env.PORT || 8000, function() {
     // request.get("http://localhost:8000/186");
 });
 
-var job = new CronJob('*/20 * * * * *', function() {
+var gamesJob = new CronJob('1111/20 * * * * *', function() {
     // console.log("Started cron job on %s", moment());
     get100Data(defaultGroup, function(err, results) {
         token = results.token.access_token;
         scrapeHandler(results.scrape.games, function(success) {
-            if (success) {
-                console.log("Job completed successfully");
-            }
+            // if (success) {
+            //     console.log("Job completed successfully");
+            // }
         });
     });
 }, function() {
     // console.log("Cron job finished");
 }, true, null);
 
-var quoteJob = new CronJob('0 10 * * * *', function() {
-    console.log("Sent a quote");
-    var quote = items[Math.floor(Math.random()*items.length)];
+var quoteJob = new CronJob('* */5 * * * *', function() {
+    var quote = quotes[Math.floor(Math.random() * quotes.length)];
+    var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
     request.post({
-        url: "",
+        url: "https://hooks.slack.com/services/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",
         json: true,
         body: {
             "attachments": [{
                 "color": "#danger",
-                "fallback": "\"" + quote.text + "\"",
-                "text": "\"" + quote.text + "\""
+                "fallback": text,
+                "text": text,
+                "mrkdwn_in": ["text", "pretext"]
             }],
+            // "channel": "#test-channel",
             "icon_url": "https://rebekahlang.files.wordpress.com/2015/05/ghost-02-png.png",
-            "username": quote.name
+            "username": "quotebot",
+            "mkdwn": true
         }
     })
-})
+}, function() {
+    // console.log("Cron job finished");
+}, true, null);
 
 function get100Data(group, callback) {
     async.parallel({
