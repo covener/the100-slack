@@ -12,58 +12,16 @@ var baasUrl = "https://api.usergrid.com/the100/slack";
 var slackWebHookUrl = "https://hooks.slack.com/services/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";
 var defaultGroup = 186;
 var token = "";
-var quotes = [{
-    "name": "Ghost",
-    "text": "So you think you can kill a god?"
-}, {
-    "name": "Destiny Patch Notes",
-    "text": "Fixed a bug where No Land Beyond's impact was too high."
-}, {
-    "name": "Destiny Patch Notes",
-    "text": "Fixed a bug where No Land Beyond did damage."
-}, {
-    "name": "Ghost",
-    "text": "This path should lead us straight to the grave.\n...The World's Grave. Not ours."
-}, {
+var fs = require('fs');
+var config = require("./quotes.json");
+var quotes = JSON.parse(fs.readFileSync('quotes.json', 'utf8'));
+
+/*
+, {
     "name": "",
-    "text": "Ghost: \"Can't we just stay here with the murderous robots?\"\nPlayer: \"No, _little light._\"\nGhost: \"_Don't_ do that.\""
-}, {
-    "name": "Master Rahool, Cryptarch",
-    "text": "Roses are red, your item is blue, your engram was purple, sucks to be you."
-}, {
-    "name": "Hardcase Hunter Cloak",
-    "text": "If you learn nothing else, learn this: when a Hunter takes up a cloak of a dead comrade, this is a vow."
-}, {
-    "name": "Invective",
-    "text": "I tried to talk them down. They made a grab for my ghost. It was a pretty short conversation after that."
-}, {
-    "name": "Ghost",
-    "text": "We've woken the hive!"
-}, {
-    "name": "Variks",
-    "text": "That is the leader of the Fang. He just called you a....well it was an insult."
-}, {
-    "name": "Postmaster",
-    "text": "Package for warlock... stop floating... bad package!"
-}, {
-    "name": "Steel Oracle Z-11",
-    "text": "I forsee fire. Fire and screams.\nYou would, mate. You're a rocket launcher."
-}, {
-    "name": "Ghost",
-    "text": "A cell! From the Prison of Elders!"
-}, {
-    "name": "Omnigul",
-    "text": "AAAAEEEEEEKKEkekekkekekEKKEKAKAHHAHAHAHA!!!!!!!!!"
-}, {
-    "name": "Ghost",
-    "text": "That wizard came from the moon!"
-}, {
-    "name": "The Comedian",
-    "text": "A. A ha. A ha ha ha. A ha ha ha ha ha ha ha."
-}, {
-    "name": "Eris Morn",
-    "text": "We were brave, but we were not ready."
-}]
+    "text": ""
+}
+*/
 
 app.get('/', function(req, res) {
     var fullUrl = util.format("%s://%s%s", req.protocol, req.get('host'), req.originalUrl);
@@ -108,11 +66,11 @@ var gamesJob = new CronJob('*/20 * * * * *', function() {
     // console.log("Cron job finished");
 }, true, null);
 
-var quoteJob = new CronJob('0 * * * *', function() {
+var quoteJob = new CronJob('0 0 * * * *', function() {
     var quote = quotes[Math.floor(Math.random() * quotes.length)];
     var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
     request.post({
-        url: "https://hooks.slack.com/services/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",
+        url: "zhttps://hooks.slack.com/services/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",
         json: true,
         body: {
             "attachments": [{
