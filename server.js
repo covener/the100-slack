@@ -108,7 +108,7 @@ var gamesJob = new CronJob('*/20 * * * * *', function() {
     // console.log("Cron job finished");
 }, true, null);
 
-var quoteJob = new CronJob('*/5 * * * *', function() {
+var quoteJob = new CronJob('*/20 * * * *', function() {
     var quote = quotes[Math.floor(Math.random() * quotes.length)];
     var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
     request.post({
@@ -121,9 +121,9 @@ var quoteJob = new CronJob('*/5 * * * *', function() {
                 "text": text,
                 "mrkdwn_in": ["text", "pretext"]
             }],
-            // "channel": "#test-channel",
+            "channel": "#general",
             "icon_url": "https://rebekahlang.files.wordpress.com/2015/05/ghost-02-png.png",
-            "username": "quotebot",
+            "username": "dinklebot",
             "mkdwn": true
         }
     })
