@@ -16,11 +16,11 @@ var quotes = [{
     "name": "Ghost",
     "text": "So you think you can kill a god?"
 }, {
-    "name": "Reddit",
+    "name": "Destiny Patch Notes",
     "text": "Fixed a bug where No Land Beyond's impact was too high."
 }, {
-    "name": "Reddit",
-    "text": "Fixed a bug where no land beyond did damage."
+    "name": "Destiny Patch Notes",
+    "text": "Fixed a bug where No Land Beyond did damage."
 }, {
     "name": "Ghost",
     "text": "This path should lead us straight to the grave.\n...The World's Grave. Not ours."
@@ -57,6 +57,12 @@ var quotes = [{
 }, {
     "name": "Ghost",
     "text": "That wizard came from the moon!"
+}, {
+    "name": "The Comedian",
+    "text": "A. A ha. A ha ha ha. A ha ha ha ha ha ha ha."
+}, {
+    "name": "Eris Morn",
+    "text": "We were brave, but we were not ready."
 }]
 
 app.get('/', function(req, res) {
