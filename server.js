@@ -66,11 +66,11 @@ var gamesJob = new CronJob('*/20 * * * * *', function() {
     // console.log("Cron job finished");
 }, true, null);
 
-var quoteJob = new CronJob('*/20 * * * *', function() {
+var quoteJob = new CronJob('0 */20 * * * *', function() {
     var quote = quotes[Math.floor(Math.random() * quotes.length)];
     var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
     request.post({
-        url: "zhttps://hooks.slack.com/services/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",
+        url: "https://hooks.slack.com/services/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",
         json: true,
         body: {
             "attachments": [{
