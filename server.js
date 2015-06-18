@@ -54,7 +54,10 @@ var quotes = [{
 }, {
     "name": "Omnigol",
     "text": "AAAAEEEEEEKKEkekekkekekEKKEKAKAHHAHAHAHA!!!!!!!!!"
-}, ]
+}, {
+    "name": "Ghost",
+    "text": "That wizard came from the moon!"
+}]
 
 app.get('/', function(req, res) {
     var fullUrl = util.format("%s://%s%s", req.protocol, req.get('host'), req.originalUrl);
@@ -85,7 +88,7 @@ app.listen(process.env.PORT || 8000, function() {
     // request.get("http://localhost:8000/186");
 });
 
-var gamesJob = new CronJob('1111/20 * * * * *', function() {
+var gamesJob = new CronJob('*/20 * * * * *', function() {
     // console.log("Started cron job on %s", moment());
     get100Data(defaultGroup, function(err, results) {
         token = results.token.access_token;
@@ -99,7 +102,7 @@ var gamesJob = new CronJob('1111/20 * * * * *', function() {
     // console.log("Cron job finished");
 }, true, null);
 
-var quoteJob = new CronJob('* * */12 * * *', function() {
+var quoteJob = new CronJob('*/5 * * * *', function() {
     var quote = quotes[Math.floor(Math.random() * quotes.length)];
     var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
     request.post({
