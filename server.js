@@ -126,6 +126,8 @@ var quoteJob = new CronJob('*/20 * * * *', function() {
             "username": "dinklebot",
             "mkdwn": true
         }
+    }, function(e, r, body) {
+        if (body !== "ok") console.log("Joke failed: " + body);
     })
 }, function() {
     // console.log("Cron job finished");
