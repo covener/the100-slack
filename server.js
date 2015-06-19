@@ -182,7 +182,7 @@ function scrapeHandler(games, callback) {
 
 function notify(game, uuid) {
     var relativeTime = moment(game.time).fromNow();
-    var gameTime = util.format("%s PST", moment(game.time).format("MMM D, hh:mma"));
+    var gameTime = util.format("%s PST", moment(game.time).format("ddd, MMM D, hh:mma"));
     var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
     var requiredLevelString = (game.requiredLevel) ? util.format("*level %s%s* ", game.requiredLevel, ((game.requiredLevel < 34) ? "+" : "")) : "";
     var guardianString = "";
