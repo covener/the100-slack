@@ -66,30 +66,30 @@ var gamesJob = new CronJob('*/20 * * * * *', function() {
     // console.log("Cron job finished");
 }, true, null);
 
-var quoteJob = new CronJob('0 0 12 * * *', function() {
-    var quote = quotes[Math.floor(Math.random() * quotes.length)];
-    var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
-    request.post({
-        url: "https://hooks.slack.com/services/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",
-        json: true,
-        body: {
-            "attachments": [{
-                "color": "#danger",
-                "fallback": text,
-                "text": text,
-                "mrkdwn_in": ["text", "pretext"]
-            }],
-            "channel": "#random",
-            "icon_url": "https://rebekahlang.files.wordpress.com/2015/05/ghost-02-png.png",
-            "username": "dinklebot",
-            "mkdwn": true
-        }
-    }, function(e, r, body) {
-        if (body !== "ok") console.log("Joke failed: " + body);
-    })
-}, function() {
-    // console.log("Cron job finished");
-}, true, null);
+// var quoteJob = new CronJob('0 0 12 * * *', function() {
+//     var quote = quotes[Math.floor(Math.random() * quotes.length)];
+//     var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
+//     request.post({
+//         url: "https://hooks.slack.com/services/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",
+//         json: true,
+//         body: {
+//             "attachments": [{
+//                 "color": "#danger",
+//                 "fallback": text,
+//                 "text": text,
+//                 "mrkdwn_in": ["text", "pretext"]
+//             }],
+//             "channel": "#random",
+//             "icon_url": "https://rebekahlang.files.wordpress.com/2015/05/ghost-02-png.png",
+//             "username": "dinklebot",
+//             "mkdwn": true
+//         }
+//     }, function(e, r, body) {
+//         if (body !== "ok") console.log("Joke failed: " + body);
+//     })
+// }, function() {
+//     // console.log("Cron job finished");
+// }, true, null);
 
 function get100Data(group, callback) {
     async.parallel({
