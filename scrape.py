@@ -4,10 +4,8 @@ from bs4 import BeautifulSoup
 dev = True  
 
 gameTitleChannelMap = {
-    "Crota's End - Normal Mode": "crota-nm",
-    "Crota's End - Hard Mode": "crota-hm",
-    "Vault of Glass - Normal Mode": "vog-nm",
-    "Vault of Glass - Hard Mode": "vog-hm",
+    "Crota's End": "crota-raid",
+    "Vault of Glass - Normal Mode": "vog-raid",
     "Prison of Elders": "prison-of-elders",
     "Trials of Osiris": "trials-of-osiris",
     "Weekly Nightfall Strike": "nightfall",
@@ -36,7 +34,8 @@ gameTitleChannelMap = {
 keywordChannelMap = {
     "gorgons? (chest|giveaway)": "gorgon",
     "drunk[- ]raid": "drunk-raids",
-    "fatebringer": "fatebringerless"
+    "fatebringer": "fatebringerless",
+    "flawless": "flawed-raiders"
 }
 
 if len(sys.argv) > 1:
