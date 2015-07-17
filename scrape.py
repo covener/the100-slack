@@ -5,7 +5,7 @@ dev = True
 
 gameTitleChannelMap = {
     "Crota's End": "crota-raid",
-    "Vault of Glass - Normal Mode": "vog-raid",
+    "Vault of Glass": "vog-raid",
     "Prison of Elders": "prison-of-elders",
     "Trials of Osiris": "trials-of-osiris",
     "Weekly Nightfall Strike": "nightfall",
@@ -32,7 +32,7 @@ gameTitleChannelMap = {
 }
 
 keywordChannelMap = {
-    "gorgons? (chest|giveaway)": "gorgon",
+    "gorgons? (chest|giveaway)": "checkpoint-club",
     "drunk[- ]raid": "drunk-raids",
     "fatebringer": "fatebringerless",
     "flawless": "flawed-raiders"
