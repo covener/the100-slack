@@ -79,7 +79,12 @@ class Game:
         return ' '.join(o.find("span", { "class": "badge"}).parent.text.replace('\n', ' ').replace('\r', '').split())
 
     def parseGameText(self, o):
-        return o.find("h4", { "class": "issue-item-text"}).text.lstrip().rstrip()
+        try:
+            gameText = o.find("h2", { "class": "issue-item-text"}).text.lstrip().rstrip()
+        except:
+            gameText = o.find("h4", { "class": "issue-item-text"}).text.lstrip().rstrip()
+        # print gameText
+        return gameText
 
     ### parsing functions
 
@@ -92,8 +97,12 @@ class Game:
         time = { "hour": mT.group(1), "minute": mT.group(2) }
         if (mT.group(3) == "PM"):
             time['hour'] = str(int(time['hour']) + 12)
-        mD = re.search(r"\w{3}, (\d\d-\d\d) [A-Z]{3}", o.find("small").text)
-        date = str(moment.now().year) + "-" + str(mD.group(1)) + "T" + time['hour'] + ":" + time['minute'] + ":00" + moment.now().locale("US/Pacific").strftime('%z')
+        if (o.find("ul", {"class": "game-details-list"}) == None):
+            mD = re.search(r"\w{3}, (\d\d)-(\d\d) [A-Z]{3}", o.find("small").text)
+        else:
+            mD = re.search(r"\w{3}, (\d\d)/(\d\d) [A-Z]{3}", o.find("ul", {"class": "game-details-list"}).findNext("li").text)
+        date = str(moment.now().year) + "-" + str(mD.group(1)) + "-" + str(mD.group(2)) + "T" + time['hour'] + ":" + time['minute'] + ":00" + moment.now().locale("US/Pacific").strftime('%z')
+        # print date
         return date
 
     def parseStatus(self, o):
@@ -101,12 +110,16 @@ class Game:
         return status.text if (status) else "Over"
 
     def parseUrl(self, o):
-        url = o.find("div", { "class": "project-item-button"}).find('a', text=re.compile(r"View Lobby"), href=True)['href']
+        if (o.find("a", { "class": "game-title"}) == None):
+            url = o.find("div", { "class": "project-item-button"}).find('a', text=re.compile(r"View Lobby"), href=True)['href']
+        else:
+            url = o.find("a", { "class": "game-title"})['href']
         url = "https://www.the100.io" + url
+        # print url
         return url
 
     def parseTitle(self, o):
-        title = re.search(r"\|(.*)", self.gameText).group(1).rstrip().lstrip()
+        title = re.search(r"[\n|](.*)", self.gameText).group(1).rstrip().lstrip()
         return title
 
     def parseRequiredLevel(self, o):
@@ -114,7 +127,10 @@ class Game:
         return int(lvl.group(1)) if (lvl) else None
 
     def parseDescription(self, o):
-        description = o.find("h4", { "class": "issue-item-text"}).findNext('p').text.rstrip().lstrip()
+        try:
+            description = o.find("h2", { "class": "issue-item-text"}).findNext('p').text.rstrip().lstrip()
+        except:
+            description = o.find("h4", { "class": "issue-item-text"}).findNext('p').text.rstrip().lstrip()
         return description
 
     def parsePlatform(self, o):
@@ -126,8 +142,12 @@ class Game:
 
     def parsePlayers(self, o):
         players = []
-        for player in o.find("h4", { "class": "issue-item-text"}).parent.findAll('a', href=True):
-            players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
+        try:
+            for player in o.find("h2", { "class": "issue-item-text"}).parent.findAll('a', href=True):
+                players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
+        except:
+            for player in o.find("h4", { "class": "issue-item-text"}).parent.findAll('a', href=True):
+                players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
         return players
 
     def parseHost(self, o):
