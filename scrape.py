@@ -142,10 +142,10 @@ class Game:
 
     def parsePlayers(self, o):
         players = []
-        try:
-            for player in o.find("h2", { "class": "issue-item-text"}).parent.findAll('a', href=True):
+        if (o.find("div", { "class": "game-player-sessions"}) != None):
+            for player in o.find("div", { "class": "game-player-sessions"}).findAll('a', href=True):
                 players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
-        except:
+        if (len(players) == 0):
             for player in o.find("h4", { "class": "issue-item-text"}).parent.findAll('a', href=True):
                 players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
         return players
