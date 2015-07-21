@@ -76,13 +76,18 @@ class Game:
     ### internal functions
 
     def parseGameDetails(self, o):
-        return ' '.join(o.find("span", { "class": "badge"}).parent.text.replace('\n', ' ').replace('\r', '').split())
+        details = ' '.join(o.find("span", { "class": "badge"}).parent.text.replace('\n', ' ').replace('\r', '').split())
+        if (len(details) == 3):
+            for li in o.find("ul", {"class": "game-details-list"}).findAll('li'):
+                details += li.text
+            details = ' '.join(details.replace('\n', ' ').replace('\r', '').split())
+        return details
 
     def parseGameText(self, o):
         try:
-            gameText = o.find("h2", { "class": "issue-item-text"}).text.lstrip().rstrip()
+            gameText = o.find("h2", { "class": "issue-item-text"}).text.strip()
         except:
-            gameText = o.find("h4", { "class": "issue-item-text"}).text.lstrip().rstrip()
+            gameText = o.find("h4", { "class": "issue-item-text"}).text.strip()
         # print gameText
         return gameText
 
@@ -107,7 +112,9 @@ class Game:
 
     def parseStatus(self, o):
         status = o.find("a", { "class": "btn-block"})
-        return status.text if (status) else "Over"
+        if (status == None):
+            status = o.find("button", {"class": "btn-block"})
+        return status.text.strip() if (status) else "Over"
 
     def parseUrl(self, o):
         if (o.find("a", { "class": "game-title"}) == None):
@@ -119,25 +126,25 @@ class Game:
         return url
 
     def parseTitle(self, o):
-        title = re.search(r"[\n|](.*)", self.gameText).group(1).rstrip().lstrip()
+        title = re.search(r"[\n|](.*)", self.gameText).group(1).strip()
         return title
 
     def parseRequiredLevel(self, o):
-        lvl = re.search(r"lvl (\d+)", self.gameDetails)
+        lvl = re.search(r"(?:lvl|level) (\d+)", self.gameDetails, re.I)
         return int(lvl.group(1)) if (lvl) else None
 
     def parseDescription(self, o):
         try:
-            description = o.find("h2", { "class": "issue-item-text"}).findNext('p').text.rstrip().lstrip()
+            description = o.find("h2", { "class": "issue-item-text"}).findNext('p').text.strip()
         except:
-            description = o.find("h4", { "class": "issue-item-text"}).findNext('p').text.rstrip().lstrip()
+            description = o.find("h4", { "class": "issue-item-text"}).findNext('p').text.strip()
         return description
 
     def parsePlatform(self, o):
         return o.find("span", { "class": "badge"}).text
 
     def parseMicRequired(self, o):
-        mic = re.search(r"mic required", self.gameDetails)
+        mic = re.search(r"mic required", self.gameDetails, re.I)
         return True if (mic) else False
 
     def parsePlayers(self, o):
