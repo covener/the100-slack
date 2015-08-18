@@ -2,19 +2,13 @@ var express = require('express');
 var request = require('request');
 var util = require('util');
 var async = require('async');
-var apigee = require('apigee-access');
-var cache = apigee.getCache('the100');
 var moment = require('moment');
 var app = express();
 var CronJob = require('cron').CronJob;
 
-var baasUrl = "https://api.usergrid.com/the100/slack";
-var slackWebHookUrl = "https://hooks.slack.com/services/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";
-var defaultGroup = 186;
 var token = "";
 var fs = require('fs');
-var config = require("./quotes.json");
-var quotes = JSON.parse(fs.readFileSync('quotes.json', 'utf8'));
+var globalConfig = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
 /*
 , {
@@ -31,37 +25,55 @@ app.get('/', function(req, res) {
 });
 
 app.get('/:group', function(req, res) {
-    get100Data(parseInt(req.params.group), function(err, results) {
-        if (err) {
-            res.status(500).json({
-                error: "Error loading web data."
-            });
-        } else {
-            res.json(results.scrape);
-            token = results.token.access_token;
-            scrapeHandler(results.scrape.games, function(success) {
-                // if (success) {
-                //     console.log("Job completed successfully");
-                // }
-            });
-        }
-    });
+    var groupId = parseInt(req.params.group, 10);
+    var groupConfig = getGroupConfig(groupId);
+    if (groupConfig) {
+        get100Data(groupConfig, function(err, results) {
+            if (err) {
+                res.status(500).json({
+                    error: "Error loading web data."
+                });
+            } else {
+                res.json(results.scrape);
+                token = results.token.access_token;
+                scrapeHandler(groupConfig, results.scrape.games, function(success) {
+                    // if (success) {
+                    //     console.log("Job completed successfully");
+                    // }
+                });
+            }
+        });
+    }
 });
 
 app.listen(process.env.PORT || 8000, function() {
     // request.get("http://localhost:8000/186");
 });
 
+function getGroupConfig(groupId) {
+    var groupConfig = globalConfig.groups[String(groupId)];
+    if (groupConfig) {
+        // populate the id into the object for easy access
+        groupConfig.id = groupId;
+    }
+    return groupConfig;
+}
+
 var gamesJob = new CronJob('*/20 * * * * *', function() {
     // console.log("Started cron job on %s", moment());
-    get100Data(defaultGroup, function(err, results) {
-        token = results.token.access_token;
-        scrapeHandler(results.scrape.games, function(success) {
-            // if (success) {
-            //     console.log("Job completed successfully");
-            // }
-        });
-    });
+    for (var groupId in globalConfig.groups) {
+        if (globalConfig.groups.hasOwnProperty(groupId)) {
+            var groupConfig = getGroupConfig(groupId);
+            get100Data(groupConfig, function(err, results) {
+                token = results.token.access_token;
+                scrapeHandler(groupConfig, results.scrape.games, function(success) {
+                    // if (success) {
+                    //     console.log("Job completed successfully");
+                    // }
+                });
+            });
+        }
+    }
 }, function() {
     // console.log("Cron job finished");
 }, true, null);
@@ -91,15 +103,15 @@ var gamesJob = new CronJob('*/20 * * * * *', function() {
 //     // console.log("Cron job finished");
 // }, true, null);
 
-function get100Data(group, callback) {
+function get100Data(groupConfig, callback) {
     async.parallel({
             token: function(callback) {
                 request.post({
-                        url: baasUrl + "/token",
+                        url: globalConfig.apigeeBaseUrl + "/token",
                         json: true,
                         body: {
-                            "client_id": "YXA6_KYXsBEfEeWDGf9DpoauPA",
-                            "client_secret": "YXA6G6EJpalNy2-48qgBkoSo8O_wzgE",
+                            "client_id": globalConfig.apigeeClientId,
+                            "client_secret": globalConfig.apigeeClientSecret,
                             "grant_type": "client_credentials",
                             "ttl": 0
                         }
@@ -110,7 +122,7 @@ function get100Data(group, callback) {
             },
             scrape: function(callback) {
                 var python = require('child_process').spawn(
-                    'python', ["scrape.py", group]
+                    'python', ["scrape.py", groupConfig.id]
                 );
                 var scrapedData = "";
                 python.stdout.on('data', function(data) {
@@ -130,10 +142,10 @@ function get100Data(group, callback) {
         });
 }
 
-function scrapeHandler(games, callback) {
+function scrapeHandler(groupConfig, games, callback) {
     async.each(games, function(game, callback) {
             request.get({
-                url: util.format("%s/games?ql=where%20gameId=%s", baasUrl, game.gameId),
+                url: util.format("%s/games?ql=where%20gameId=%s", globalConfig.apigeeBaseUrl, game.gameId),
                 auth: {
                     bearer: token
                 },
@@ -145,26 +157,26 @@ function scrapeHandler(games, callback) {
                     if (body.count === 0) {
                         console.log(util.format("Creating new game for %s", game.gameId))
                         request.post({
-                            url: util.format("%s/games", baasUrl),
+                            url: util.format("%s/games", globalConfig.apigeeBaseUrl),
                             auth: {
                                 bearer: token
                             },
                             json: true,
                             body: game
                         }, function(e, r, body) {
-                            if (game.groupId === defaultGroup) {
-                                notify(game, body.entities[0].uuid);
+                            if (game.groupId === groupConfig.id) {
+                                notify(groupConfig, game, body.entities[0].uuid);
                             }
                         });
                     } else if (!('notification' in body.entities[0]) || ('notification' in body.entities[0] && body.entities[0].notification === "failed")) {
-                        if (game.groupId === defaultGroup) {
+                        if (game.groupId === groupConfig.id) {
                             console.log(util.format("Re-sending notification for %s (%s)", game.gameId, body.entities[0].uuid))
-                            notify(game, body.entities[0].uuid);
+                            notify(groupConfig, game, body.entities[0].uuid);
                         }
                     } else {
                         // console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
                         request.put({
-                            url: util.format("%s/games/%s", baasUrl, body.entities[0].uuid),
+                            url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, body.entities[0].uuid),
                             auth: {
                                 bearer: token
                             },
@@ -180,7 +192,7 @@ function scrapeHandler(games, callback) {
         });
 }
 
-function notify(game, uuid) {
+function notify(groupConfi, game, uuid) {
     var relativeTime = moment(game.time).fromNow();
     var gameTime = util.format("%s PST", moment(game.time).format("ddd, MMM D, hh:mma"));
     var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
@@ -196,7 +208,7 @@ function notify(game, uuid) {
     game.channels.push("general"); // add the general channel too
     async.each(game.channels, function(channel, callback) {
         request.post({
-            url: slackWebHookUrl,
+            url: groupConfig.slackWebhookUrl,
             json: true,
             body: {
                 "attachments": [{
@@ -213,7 +225,7 @@ function notify(game, uuid) {
             if (body === "ok") {
                 console.log(util.format("Notification sent to %s for game %s", channel, game.gameId));
                 request.put({
-                    url: util.format("%s/games/%s", baasUrl, uuid),
+                    url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, uuid),
                     auth: {
                         bearer: token
                     },
@@ -225,7 +237,7 @@ function notify(game, uuid) {
             } else {
                 console.log(util.format("Error sending Slack notification: %s", body))
                 request.put({
-                    url: util.format("%s/games/%s", baasUrl, uuid),
+                    url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, uuid),
                     auth: {
                         bearer: token
                     },
