@@ -1,54 +1,15 @@
 import requests, json, sys, re, moment
 from bs4 import BeautifulSoup
+from copy import copy
 
-dev = True  
 
-gameTitleChannelMap = {
-    "Crota's End": "crota-raid",
-    "Vault of Glass": "vog-raid",
-    "Prison of Elders": "prison-of-elders",
-    "Trials of Osiris": "trials-of-osiris",
-    "Weekly Nightfall Strike": "nightfall",
-    "Weekly Heroic Strike": "weekly-heroic",
-    "Strike Playlist": "strike-playlist",
-    "The Shadow Thief": "strike-playlist",
-    "The Devil's Lair": "strike-playlist",
-    "The Summoning Pits": "strike-playlist",
-    "The Nexus": "strike-playlist",
-    "Winter's Run": "strike-playlist",
-    "Cerberus Vae III": "strike-playlist",
-    "Dust Palace": "strike-playlist",
-    "The Undying Mind": "strike-playlist",
-    "The Will of Crota": "strike-playlist",
-    "Story Mission": "up-for-anything",
-    "Daily Heroic Story": "daily-heroic",
-    "Bounty": "up-for-anything",
-    "Patrol": "patrol",
-    "Iron Banner": "iron-banner",
-    "Crucible": "crucible",
-    "Exotic Weapon Bounty": "up-for-anything",
-    "Queen's Kill Order": "up-for-anything",
-    "Miscellaneous": "up-for-anything"
-}
+gameTitleChannelMap = {}
+keywordChannelMap = {}
 
-keywordChannelMap = {
-    "gorgons? (chest|giveaway)": "checkpoint-club",
-    "drunk[- ]raid": "drunk-raids",
-    "fatebringer": "fatebringerless",
-    "flawless": "flawed-raiders"
-}
-
-if len(sys.argv) > 1:
-    group = int(sys.argv[1])
-elif (dev == True):
-    group = 186
-else:
-    print "You must pass a group ID from the100.io as an argument to this script."
-    sys.exit(1)
 
 ### Game class
 
-class Game:
+class Game(object):
     def __init__(self, o):
         self.gameDetails = self.parseGameDetails(o)
         self.gameText = self.parseGameText(o)
@@ -187,21 +148,45 @@ class Game:
                 channels.append(value)
         return channels
 
+
 ### main
 
-cookies = {'auth_token': '6cGH726-PuRCO1AiiEn6Gw'}
-r = requests.get('https://www.the100.io/groups/' + str(group) + '/gaming_sessions', cookies=cookies)
+if __name__ == '__main__':
 
-html = r.text.encode('utf-8')
-soup = BeautifulSoup(html)
+    if len(sys.argv) > 1:
+        groupId = sys.argv[1]
+        group = int(groupId)
+    else:
+        print "You must pass a group ID from the100.io as an argument to this script."
+        sys.exit(1)
 
-api = {}
-api['games'] = []
+    import os, sys
+    dirname, filename = os.path.split(os.path.abspath(sys.argv[0]))
+    globalConfig = json.loads(file(os.path.join(dirname, 'config.json')).read())
 
-for o in soup.findAll("div", { "class": "issue-item" }):
-    game = Game(o).__dict__
-    game.pop("gameDetails", None)
-    game.pop("gameText", None)
-    api['games'].append(game)
+    groupConfig = globalConfig["groups"][groupId]
 
-print json.dumps(api, sort_keys=True, indent=4)
+    gameTitleChannelMap = copy(globalConfig["defaultMaps"]["gameTitleChannelMap"])
+    if "gameTitleChannelMap" in groupConfig:
+        gameTitleChannelMap.update(groupConfig["gameTitleChannelMap"])
+
+    keywordChannelMap = copy(globalConfig["defaultMaps"]["keywordChannelMap"])
+    if "keywordChannelMap" in groupConfig:
+        keywordChannelMap.update(groupConfig["keywordChannelMap"])
+
+    cookies = {'auth_token': groupConfig['authToken']}
+    r = requests.get('https://www.the100.io/groups/' + groupId + '/gaming_sessions', cookies=cookies)
+
+    html = r.text.encode('utf-8')
+    soup = BeautifulSoup(html)
+
+    api = {}
+    api['games'] = []
+
+    for o in soup.findAll("div", { "class": "issue-item" }):
+        game = Game(o).__dict__
+        game.pop("gameDetails", None)
+        game.pop("gameText", None)
+        api['games'].append(game)
+
+    print json.dumps(api, sort_keys=True, indent=4)
