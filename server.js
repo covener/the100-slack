@@ -47,7 +47,7 @@ function getGroupConfig(groupId) {
     var groupConfig = globalConfig.groups[String(groupId)];
     if (groupConfig) {
         // populate the id into the object for easy access
-        groupConfig.id = groupId;
+        groupConfig.id = parseInt(groupId);
     }
     return groupConfig;
 }
@@ -58,9 +58,9 @@ var gamesJob = new CronJob('*/20 * * * * *', function() {
     }
     for (var groupId in globalConfig.groups) {
         if (globalConfig.groups.hasOwnProperty(groupId)) {
-            var groupConfig = getGroupConfig(groupId);
-            get100Data(groupConfig, function(err, results) {
+            get100Data(getGroupConfig(groupId), function(err, results) {
                 token = results.token.access_token;
+                groupConfig = results.groupConfig
                 scrapeHandler(groupConfig, results.scrape.games, function(success) {
                     if (success && globalConfig.logging) {
                         console.log(util.format("Job completed successfully for %s", groupId));
@@ -133,6 +133,7 @@ function get100Data(groupConfig, callback) {
             }
         },
         function(err, results) {
+            results.groupConfig = groupConfig;
             callback(err, results);
         });
 }
@@ -151,7 +152,7 @@ function scrapeHandler(groupConfig, games, callback) {
                 } else {
                     if (body.count === 0) {
                         if (globalConfig.logging) {
-                            console.log(util.format("Creating new game for %s", game.gameId))
+                            console.log(util.format("Creating new game %s (group %s)", game.gameId, game.groupId))
                         }
                         request.post({
                             url: util.format("%s/games", globalConfig.apigeeBaseUrl),
@@ -167,13 +168,13 @@ function scrapeHandler(groupConfig, games, callback) {
                         });
                     } else if (!('notification' in body.entities[0]) || ('notification' in body.entities[0] && body.entities[0].notification === "failed")) {
                         if (game.groupId === groupConfig.id) {
-                            console.log(util.format("Re-sending notification for %s (%s)", game.gameId, body.entities[0].uuid))
+                            console.log(util.format("Re-sending notification for game %s (group %s)", game.gameId, game.groupId))
                             notify(groupConfig, game, body.entities[0].uuid);
                         }
                     } else {
-                        if (globalConfig.logging) {
-                            console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
-                        }
+                        // if (globalConfig.logging) {
+                        //     console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
+                        // }
                         request.put({
                             url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, body.entities[0].uuid),
                             auth: {
@@ -191,7 +192,7 @@ function scrapeHandler(groupConfig, games, callback) {
         });
 }
 
-function notify(groupConfi, game, uuid) {
+function notify(groupConfig, game, uuid) {
     var relativeTime = moment(game.time).fromNow();
     var gameTime = util.format("%s PST", moment(game.time).format("ddd, MMM D, hh:mma"));
     var availableSpots = (game.maxPlayers - game.partySize) >= 0 ? game.maxPlayers - game.partySize : 0;
@@ -222,7 +223,7 @@ function notify(groupConfi, game, uuid) {
             }
         }, function(e, r, body) {
             if (body === "ok") {
-                console.log(util.format("Notification sent to %s for game %s", channel, game.gameId));
+                console.log(util.format("Notification sent to %s for game %s for group %s", channel, game.gameId, groupConfig.id));
                 request.put({
                     url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, uuid),
                     auth: {
