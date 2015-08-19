@@ -1,28 +1,29 @@
 {
-    "groups": {
-        "12345": {
-            "name": "Alpha Company 12345",
-            "authToken": "xxxx-xxxxxxxxxx",
-            "slackWebhookUrl": "https://hooks.slack.com/services/foo/bar/baz",
-            "gameTitleChannelMap": {
-                "Miscellaneous": "up-for-anything"
-            },
-            "keywordChannelMap": {
-                "some regex patterns?": "some-channel"
-            }
-        }
-    },
+    "apigeeBaseUrl": "https://api.usergrid.com/path",
+    "apigeeClientId": "xxxx_xxxxxxxxxxxxxxx",
+    "apigeeClientSecret": "xxxxxxxxxxxx-xxxxxxxxxxxxx",
     "defaultMaps": {
         "gameTitleChannelMap": {
             "Crota's End": "crota-raid",
-            "Vault of Glass": "vog-raid",
-            "Prison of Elders": "prison-of-elders"
+            "Prison of Elders": "prison-of-elders",
+            "Vault of Glass": "vog-raid"
         },
         "keywordChannelMap": {
             "sherpa": "sherpa-station"
         }
     },
-    "apigeeBaseUrl": "https://api.usergrid.com/path",
-    "apigeeClientId": "xxxx_xxxxxxxxxxxxxxx",
-    "apigeeClientSecret": "xxxxxxxxxxxx-xxxxxxxxxxxxx"
+    "groups": {
+        "12345": {
+            "authToken": "xxxx-xxxxxxxxxx",
+            "gameTitleChannelMap": {
+                "Miscellaneous": "up-for-anything"
+            },
+            "keywordChannelMap": {
+                "some regex patterns?": "some-channel"
+            },
+            "name": "Alpha Company 12345",
+            "slackWebhookUrl": "https://hooks.slack.com/services/foo/bar/baz"
+        }
+    },
+    "logging": true
 }

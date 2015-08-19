@@ -10,13 +10,6 @@ var token = "";
 var fs = require('fs');
 var globalConfig = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
-/*
-, {
-    "name": "",
-    "text": ""
-}
-*/
-
 app.get('/', function(req, res) {
     var fullUrl = util.format("%s://%s%s", req.protocol, req.get('host'), req.originalUrl);
     res.json({
@@ -37,9 +30,9 @@ app.get('/:group', function(req, res) {
                 res.json(results.scrape);
                 token = results.token.access_token;
                 scrapeHandler(groupConfig, results.scrape.games, function(success) {
-                    // if (success) {
-                    //     console.log("Job completed successfully");
-                    // }
+                    if (success && globalConfig.logging) {
+                        console.log(util.format("Job completed successfully for %s", req.params.group));
+                    }
                 });
             }
         });
@@ -47,7 +40,7 @@ app.get('/:group', function(req, res) {
 });
 
 app.listen(process.env.PORT || 8000, function() {
-    // request.get("http://localhost:8000/186");
+    // Do stuff on server start
 });
 
 function getGroupConfig(groupId) {
@@ -60,22 +53,24 @@ function getGroupConfig(groupId) {
 }
 
 var gamesJob = new CronJob('*/20 * * * * *', function() {
-    // console.log("Started cron job on %s", moment());
+    if (globalConfig.logging) {
+        console.log("Started cron job on %s", moment());
+    }
     for (var groupId in globalConfig.groups) {
         if (globalConfig.groups.hasOwnProperty(groupId)) {
             var groupConfig = getGroupConfig(groupId);
             get100Data(groupConfig, function(err, results) {
                 token = results.token.access_token;
                 scrapeHandler(groupConfig, results.scrape.games, function(success) {
-                    // if (success) {
-                    //     console.log("Job completed successfully");
-                    // }
+                    if (success && globalConfig.logging) {
+                        console.log(util.format("Job completed successfully for %s", groupId));
+                    }
                 });
             });
         }
     }
 }, function() {
-    // console.log("Cron job finished");
+    // cron job finished
 }, true, null);
 
 // var quoteJob = new CronJob('0 0 12 * * *', function() {
@@ -155,7 +150,9 @@ function scrapeHandler(groupConfig, games, callback) {
                     console.log("Error: bad BaaS request:\n%s", body);
                 } else {
                     if (body.count === 0) {
-                        console.log(util.format("Creating new game for %s", game.gameId))
+                        if (globalConfig.logging) {
+                            console.log(util.format("Creating new game for %s", game.gameId))
+                        }
                         request.post({
                             url: util.format("%s/games", globalConfig.apigeeBaseUrl),
                             auth: {
@@ -174,7 +171,9 @@ function scrapeHandler(groupConfig, games, callback) {
                             notify(groupConfig, game, body.entities[0].uuid);
                         }
                     } else {
-                        // console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
+                        if (globalConfig.logging) {
+                            console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
+                        }
                         request.put({
                             url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, body.entities[0].uuid),
                             auth: {
