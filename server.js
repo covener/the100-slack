@@ -183,7 +183,7 @@ function notify(groupConfig, game, uuid) {
     var guardianString = "";
     if (availableSpots > 1) {
         guardianString = util.format("need *%s* %sguardians", availableSpots, requiredLevelString);
-    } else if (availableSpots = 1) {
+    } else if (availableSpots == 1) {
         guardianString = util.format("need *%s* %sguardian", availableSpots, requiredLevelString);
     } else if (availableSpots <= 0) {
         guardianString = "(this game is full)";
