@@ -28,10 +28,14 @@ app.get('/:group', function(req, res) {
                 });
             } else {
                 res.json(results.scrape);
-                token = results.token.access_token;
+                if (results && results.token && results.token.access_token) {
+                    token = results.token.access_token;
+                } else {
+                    console.log(util.format("token request failed: \n%s", results));
+                }
                 scrapeHandler(groupConfig, results.scrape.games, function(success) {
                     if (success && globalConfig.logging) {
-                        console.log(util.format("Job completed successfully for %s", req.params.group));
+                        console.log(util.format("Job completed successfully for group %s", req.params.group));
                     }
                 });
             }
@@ -53,50 +57,27 @@ function getGroupConfig(groupId) {
 }
 
 var gamesJob = new CronJob('*/20 * * * * *', function() {
-    if (globalConfig.logging) {
+    if (globalConfig.loggingCron) {
         console.log("Started cron job on %s", moment());
     }
     for (var groupId in globalConfig.groups) {
         if (globalConfig.groups.hasOwnProperty(groupId)) {
             get100Data(getGroupConfig(groupId), function(err, results) {
-                token = results.token.access_token;
-                groupConfig = results.groupConfig
-                scrapeHandler(groupConfig, results.scrape.games, function(success) {
-                    if (success && globalConfig.logging) {
-                        console.log(util.format("Job completed successfully for %s", groupId));
-                    }
-                });
+                if (results && results.token && results.token.access_token) {
+                    token = results.token.access_token;
+                    scrapeHandler(results.groupConfig, results.scrape.games, function(success) {
+                        if (success && globalConfig.loggingCron) {
+                            console.log(util.format("Job completed successfully for %s", groupId));
+                        }
+                    });    
+                } else {
+                    console.log(util.format("Error retrieving token request: \n", results))
+                }
             });
         }
     }
 }, function() {
-    // cron job finished
 }, true, null);
-
-// var quoteJob = new CronJob('0 0 12 * * *', function() {
-//     var quote = quotes[Math.floor(Math.random() * quotes.length)];
-//     var text = (quote.name !== "") ? util.format("\"%s\"\n\n – _%s_", quote.text, quote.name) : quote.text;
-//     request.post({
-//         url: "https://hooks.slack.com/services/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",
-//         json: true,
-//         body: {
-//             "attachments": [{
-//                 "color": "#danger",
-//                 "fallback": text,
-//                 "text": text,
-//                 "mrkdwn_in": ["text", "pretext"]
-//             }],
-//             "channel": "#random",
-//             "icon_url": "https://rebekahlang.files.wordpress.com/2015/05/ghost-02-png.png",
-//             "username": "dinklebot",
-//             "mkdwn": true
-//         }
-//     }, function(e, r, body) {
-//         if (body !== "ok") console.log("Joke failed: " + body);
-//     })
-// }, function() {
-//     // console.log("Cron job finished");
-// }, true, null);
 
 function get100Data(groupConfig, callback) {
     async.parallel({
@@ -140,17 +121,19 @@ function get100Data(groupConfig, callback) {
 
 function scrapeHandler(groupConfig, games, callback) {
     async.each(games, function(game, callback) {
+        var url = util.format("%s/games?ql=where%20gameId=%s", globalConfig.apigeeBaseUrl, game.gameId);
             request.get({
-                url: util.format("%s/games?ql=where%20gameId=%s", globalConfig.apigeeBaseUrl, game.gameId),
+                url: url,
                 auth: {
                     bearer: token
                 },
                 json: true
             }, function(e, r, body) {
-                if (e) {
-                    console.log("Error: bad BaaS request:\n%s", body);
+                if (e || !body) {
+                    console.log("Error: bad BaaS request:\n", url);
+                    console.log(new Date(), r.statusCode, body);
                 } else {
-                    if (body.count === 0) {
+                    if (body.hasOwnProperty('count') && body.count === 0) {
                         if (globalConfig.logging) {
                             console.log(util.format("Creating new game %s (group %s)", game.gameId, game.groupId))
                         }
