@@ -48,7 +48,7 @@ app.listen(process.env.PORT || 8000, function() {
 });
 
 function getGroupConfig(groupId) {
-    var groupConfig = globalConfig.groups[String(groupId)];
+    var groupConfig = globalConfig.groups[groupId.toString()];
     if (groupConfig) {
         // populate the id into the object for easy access
         groupConfig.id = parseInt(groupId);
@@ -56,123 +56,124 @@ function getGroupConfig(groupId) {
     return groupConfig;
 }
 
-var gamesJob = new CronJob('*/20 * * * * *', function() {
+new CronJob('*/20 * * * * *', function() {
     if (globalConfig.loggingCron) {
         console.log("Started cron job on %s", moment());
     }
     for (var groupId in globalConfig.groups) {
         if (globalConfig.groups.hasOwnProperty(groupId)) {
-            get100Data(getGroupConfig(groupId), function(err, results) {
-                if (results && results.token && results.token.access_token) {
-                    token = results.token.access_token;
+            var groupConfig = getGroupConfig(groupId);
+            get100Data(groupConfig, function(err, results) {
+                if (err) {
+                    console.log(util.format("Error: %s", err), results);
+                } else if (results && results.token && results.token.access_token) {
+                    var token = results.token.access_token;
                     scrapeHandler(results.groupConfig, results.scrape.games, function(success) {
                         if (success && globalConfig.loggingCron) {
                             console.log(util.format("Job completed successfully for %s", groupId));
                         }
-                    });    
+                    });
                 } else {
                     console.log(util.format("Error retrieving token request: \n", results))
                 }
             });
         }
     }
-}, function() {
-}, true, null);
+});
 
 function get100Data(groupConfig, callback) {
     async.parallel({
-            token: function(callback) {
-                request.post({
-                        url: globalConfig.apigeeBaseUrl + "/token",
-                        json: true,
-                        body: {
-                            "client_id": globalConfig.apigeeClientId,
-                            "client_secret": globalConfig.apigeeClientSecret,
-                            "grant_type": "client_credentials",
-                            "ttl": 0
-                        }
-                    },
-                    function(e, r, body) {
-                        callback(null, body);
-                    });
-            },
-            scrape: function(callback) {
-                var python = require('child_process').spawn(
-                    'python', ["scrape.py", groupConfig.id]
-                );
-                var scrapedData = "";
-                python.stdout.on('data', function(data) {
-                    scrapedData += data
-                });
-                python.on('close', function(code) {
-                    if (code !== 0) {
-                        callback(true);
-                    } else {
-                        callback(null, JSON.parse(scrapedData));
-                    }
-                });
-            }
+        token: function(callback) {
+            request.post({
+                url: globalConfig.apigeeBaseUrl + "/token",
+                json: true,
+                body: {
+                    "client_id": globalConfig.apigeeClientId,
+                    "client_secret": globalConfig.apigeeClientSecret,
+                    "grant_type": "client_credentials",
+                    "ttl": 0
+                }
+            }, function(e, r, body) {
+                callback(e, body);
+            });
         },
-        function(err, results) {
-            results.groupConfig = groupConfig;
-            callback(err, results);
-        });
+        scrape: function(callback) {
+            var python = require('child_process').spawn(
+                'python', ["scrape.py", groupConfig.id]
+            );
+            var scrapedData = "";
+            python.stdout.on('data', function(data) {
+                scrapedData += data
+            });
+            python.on('close', function(code) {
+                if (code !== 0) {
+                    callback(code);
+                } else {
+                    callback(null, JSON.parse(scrapedData));
+                }
+            });
+        }
+    }, function(err, results) {
+        results.groupConfig = groupConfig;
+        callback(err, results);
+    });
 }
 
 function scrapeHandler(groupConfig, games, callback) {
     async.each(games, function(game, callback) {
         var url = util.format("%s/games?ql=where%20gameId=%s", globalConfig.apigeeBaseUrl, game.gameId);
-            request.get({
-                url: url,
-                auth: {
-                    bearer: token
-                },
-                json: true
-            }, function(e, r, body) {
-                if (e || !body) {
-                    console.log("Error: bad BaaS request:\n", url);
-                    console.log(new Date(), r.statusCode, body);
-                } else {
-                    if (body.hasOwnProperty('count') && body.count === 0) {
-                        if (globalConfig.logging) {
-                            console.log(util.format("Creating new game %s (group %s)", game.gameId, game.groupId))
-                        }
-                        request.post({
-                            url: util.format("%s/games", globalConfig.apigeeBaseUrl),
-                            auth: {
-                                bearer: token
-                            },
-                            json: true,
-                            body: game
-                        }, function(e, r, body) {
-                            if (game.groupId === groupConfig.id) {
-                                notify(groupConfig, game, body.entities[0].uuid);
-                            }
-                        });
-                    } else if (!('notification' in body.entities[0]) || ('notification' in body.entities[0] && body.entities[0].notification === "failed")) {
+        request.get({
+            url: url,
+            auth: {
+                bearer: token
+            },
+            json: true
+        }, function(e, r, body) {
+            if (e || !body) {
+                console.log("Error: bad BaaS request:\n", url);
+                console.log(new Date(), r.statusCode, body);
+                callback(e);
+            } else {
+                if (body.hasOwnProperty('count') && body.count === 0) {
+                    if (globalConfig.logging) {
+                        console.log(util.format("Creating new game %s (group %s)", game.gameId, game.groupId))
+                    }
+                    request.post({
+                        url: util.format("%s/games", globalConfig.apigeeBaseUrl),
+                        auth: {
+                            bearer: token
+                        },
+                        json: true,
+                        body: game
+                    }, function(e, r, body) {
                         if (game.groupId === groupConfig.id) {
-                            console.log(util.format("Re-sending notification for game %s (group %s)", game.gameId, game.groupId))
                             notify(groupConfig, game, body.entities[0].uuid);
                         }
-                    } else {
-                        // if (globalConfig.logging) {
-                        //     console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
-                        // }
-                        request.put({
-                            url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, body.entities[0].uuid),
-                            auth: {
-                                bearer: token
-                            },
-                            json: true,
-                            body: game
-                        });
+                    });
+                } else if (!('notification' in body.entities[0]) || ('notification' in body.entities[0] && body.entities[0].notification === "failed")) {
+                    if (game.groupId === groupConfig.id) {
+                        console.log(util.format("Re-sending notification for game %s (group %s)", game.gameId, game.groupId))
+                        notify(groupConfig, game, body.entities[0].uuid);
                     }
+                } else {
+                    // if (globalConfig.logging) {
+                    //     console.log(util.format("Updating %s (%s)", game.gameId, body.entities[0].uuid))
+                    // }
+                    request.put({
+                        url: util.format("%s/games/%s", globalConfig.apigeeBaseUrl, body.entities[0].uuid),
+                        auth: {
+                            bearer: token
+                        },
+                        json: true,
+                        body: game
+                    });
                 }
-            })
-        },
-        function(err) {
-            callback(!err);
-        });
+                callback();
+            }
+        })
+    }, function(err) {
+        callback(!err);
+    });
 }
 
 function notify(groupConfig, game, uuid) {
