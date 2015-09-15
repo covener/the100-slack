@@ -7,8 +7,6 @@ var util = require('util');
 var moment = require('moment');
 var app = express();
 var cron = require('cron').CronJob;
-var fs = require('fs');
-var ok = require('objectkit');
 var Log = require('log'),
     log = new Log(config.logLevel)
 
@@ -46,14 +44,14 @@ app.get('/:group', function(req, res) {
     }
 });
 
-new cron('*/20 * * * * *', function() {
-    log.debug("Started cron job on %s", moment());
+new cron('*/60 * * * * *', function() {
+    log.debug("Running cron job");
     async.each(Object.keys(config.groups), function(groupId) {
         var groupConfig = config.group(groupId);
         groupConfig.groupId = groupId;
         the100.getData(groupConfig, function(err, results) {
             if (err) {
-                log.error(util.format("Error: %s", err));
+                log.error(util.format("%s", err));
             } else {
                 the100.processData(groupConfig, results);
             }

@@ -1,13 +1,15 @@
 var fs = require('fs');
+var util = require('util');
 
 function configForGroup(groupId) {
-    var configForGroup = module.exports.groups[groupId.toString()];
-    if (configForGroup) {
+    var groupConfig = module.exports.groups[groupId.toString()];
+    if (groupConfig) {
         // populate the id into the object for easy access
-        configForGroup.id = parseInt(groupId);
+        groupConfig.id = parseInt(groupId);
     }
-    return configForGroup;
+    return groupConfig;
 }
 
-module.exports = JSON.parse(fs.readFileSync(__dirname + '/config.json', 'utf8'));;
+module.exports = JSON.parse(fs.readFileSync(__dirname + '/config.json', 'utf8'));
+module.exports.apigeeUri = util.format("https://api.usergrid.com/%s/%s", module.exports.apigeeOrg, module.exports.apigeeApp);
 module.exports.group = configForGroup;
