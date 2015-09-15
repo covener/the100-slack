@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
     import os, sys
     dirname, filename = os.path.split(os.path.abspath(sys.argv[0]))
-    globalConfig = json.loads(file(os.path.join(dirname, 'config.json')).read())
+    globalConfig = json.loads(file(os.path.join(dirname, '../config/config.json')).read())
 
     groupConfig = globalConfig["groups"][groupId]
 

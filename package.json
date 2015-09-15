@@ -4,7 +4,9 @@
         "request": "~2.57.0",
         "async": "~1.2.1",
         "cron": "~1.0.9",
-        "moment": "~2.10.3"
+        "moment": "~2.10.3",
+        "objectkit": "",
+        "log": ""
     },
     "description": "A web scraper and slack integration for the100.io",
     "engines": {
@@ -28,5 +30,5 @@
     "scripts": {
         "start": "node server.js"
     },
-    "version": "0.0.1"
+    "version": "0.0.5"
 }
