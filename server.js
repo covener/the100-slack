@@ -44,7 +44,7 @@ app.get('/:group', function(req, res) {
     }
 });
 
-new cron('*/60 * * * * *', function() {
+new cron('*/20 * * * * *', function() {
     log.debug("Running cron job");
     async.each(Object.keys(config.groups), function(groupId) {
         var groupConfig = config.group(groupId);
