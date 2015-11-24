@@ -9,9 +9,6 @@
         "log": ""
     },
     "description": "A web scraper and slack integration for the100.io",
-    "engines": {
-        "node": "0.12.2"
-    },
     "keywords": [
         "node",
         "heroku",
