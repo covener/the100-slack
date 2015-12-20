@@ -110,11 +110,10 @@ class Game(object):
 
     def parsePlayers(self, o):
         players = []
-        if (o.find("div", { "class": "game-player-sessions"}) != None):
-            for player in o.find("div", { "class": "game-player-sessions"}).findAll('a', href=True):
-                players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
-        if (len(players) == 0):
-            for player in o.find("h4", { "class": "issue-item-text"}).parent.findAll('a', href=True):
+        sessions = o.findAll("li", attrs={ "class": "confirmed-session"});
+        for ses in sessions:
+            hrefs = ses.findAll("a", href=True);
+            for player in hrefs:
                 players.append({"name": player.text, "url": "https://www.the100.io" + player['href']})
         return players
 
